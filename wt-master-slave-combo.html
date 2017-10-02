@@ -1,0 +1,240 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../vaadin-combo-box/vaadin-combo-box.html">
+
+<link rel="import" href="../wt-bootstrap-styles/wt-bootstrap-styles.html">
+
+<!--
+`<my-station>` Shows the vaadin grid in action with iron-ajax against the climate api.
+In typical use, just slap some `<my-station>` anywhere you would like to put it.
+      <my-station></my-station>
+Wham! It's all awesome now!
+
+@demo /web-components/drawer-app/#/station/list  Super cool demo!!
+-->
+<dom-module id="wt-master-slave-combo">
+  <template>
+    <style include="bootstrap-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+
+      paper-tab {
+        background-color: #e6e6e6;
+      }
+
+      green {
+        color: #00ff00;
+      }
+    </style>
+
+    <iron-ajax auto id="master-combo-ajax"
+        url={{masterSlaveUrl}}
+        params='{"xaction":"get-master-combo"}'
+        handle-as="json"
+        last-response="{{master}}"></iron-ajax>
+
+    <iron-ajax id="slave-combo-ajax"
+        url={{masterSlaveUrl}}
+        handle-as="json"
+        on-response="_handleSlaveResponse"></iron-ajax>
+
+    <div id="row-div">
+      <div id="master-combo-div" class="{{masterColClass}}">
+        <vaadin-combo-box readonly={{readonly}} required="{{required}}"  disabled="{{disabled}}"  value={{masterDefaultData}} name="master-combo" id="master-combo" class="elements-box" items="[[master.payload]]"
+        label={{masterLabel}} item-label-path="desc" item-value-path="type"><paper-icon-button id="remove" slot="prefix" style="width: 25px; height: 25px; ; color: red" icon="icons:remove-circle"></paper-icon-button></vaadin-combo-box>
+      </div>
+      <div id="slave-combo-div" class="{{slaveColClass}}">
+      </div>
+    </div>
+
+
+  </template>
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class WtMasterSlaveCombo extends Polymer.Element {
+      static get is() { return 'wt-master-slave-combo'; }
+
+      static get properties() {
+        return {
+            masterSlaveUrl: String,
+            masterLabel: String,
+            slaveLabel: String,
+            rowClass: {
+              type: String,
+              value: "row"
+            },
+            masterColClass: {
+              type: String,
+              value: "col-sm-6"
+            },
+            slaveColClass: {
+              type: String,
+              value: "col-sm-6"
+            },
+            slaveName: {
+              type: String,
+              value: ""
+            },
+            slaveDefaultData: {
+              type: String,
+              value: "",
+              reflectToAttribute: true,
+              notify: true
+            },
+            masterName: {
+              type: String,
+              value: ""
+            },
+            masterDefaultData: {
+              type: String,
+              value: "",
+              reflectToAttribute: true,
+              notify: true
+            },
+            disabled: {
+              type: Boolean,
+              value: false
+            },
+            required: {
+              type: Boolean,
+              value: false
+            },
+            readonly: {
+              type: Boolean,
+              value: false
+            }
+        }
+      }
+
+        // Element class can define custom element reactions
+        connectedCallback() {
+            super.connectedCallback();
+            var me = this;
+
+            var masterCombo = Polymer.dom(this.root).querySelector('#master-combo');
+            var slaveComboAjax = Polymer.dom(this.root).querySelector('#slave-combo-ajax');
+            var rowDiv = Polymer.dom(this.root).querySelector('#row-div');
+            var slaveComboDiv = Polymer.dom(this.root).querySelector('#slave-combo-div');
+            var masterComboDiv = Polymer.dom(this.root).querySelector('#master-combo-div');
+            var removeBtn = Polymer.dom(this.root).querySelector('#remove');
+
+            rowDiv.className += " "+me.rowClass;
+            slaveComboDiv.className += " "+me.slaveColClass;
+            masterComboDiv.className += " "+me.masterColClass;
+            me.masterCombo = masterCombo;
+            me.masterCombo.value = "";
+            if (me.masterName != "") {
+                me.masterCombo.name = me.masterName;
+            } else {
+                me.masterCombo.name = "master-combo";
+            }
+
+            if (me.masterDefaultData != -1) {
+                me.masterCombo.value = me.masterDefaultData;
+            }
+
+            removeBtn.addEventListener('click',function(e){
+
+                me.dispatchEvent(new CustomEvent('wt-slave-combo-remove', {
+                  bubbles: true,
+                  composed: true,
+                  value: "",
+                  detail: {
+                    target: me,
+                    value: ""
+                  }
+                }));
+
+                //Note:  We throw an event to allow the listening process to remove the combo.
+            });
+
+            masterCombo.addEventListener('value-changed', function(e) {
+                // Do ajax based on master combo value.
+                if (typeof masterCombo.value != 'undefined' && masterCombo.value != -1) {
+                    slaveComboAjax.params = {xaction: "get-"+masterCombo.value};
+                    slaveComboAjax.generateRequest();
+                }
+
+                this.dispatchEvent(new CustomEvent('wt-slave-combo-changed', {
+                  composed: true,
+                  bubbles: true,
+                  value: e.detail.value,
+                  detail: {
+                    target: this._target,
+                    value: e.detail.value
+                  }
+                }));
+            });
+        }
+
+        ready() {
+            super.ready();
+        }
+
+        _handleSlaveResponse(r) {
+            var me = this;
+            var slaveComboDiv = Polymer.dom(this.root).querySelector('#slave-combo-div');
+            // Remove child node if exists.
+            if (typeof slaveComboDiv.childNodes != 'undefined' && typeof slaveComboDiv.childNodes[0] != 'undefined') {
+              slaveComboDiv.removeChild(slaveComboDiv.childNodes[0]);
+            }
+
+            if (r.detail.response.payload.length > 0) {
+              var slaveCombo = document.createElement('vaadin-combo-box');
+              slaveCombo.id = "slave-combo";
+              slaveCombo.disabled = me.disabled;
+              slaveCombo.readonly = me.readonly;
+              if (me.slaveName != "") {
+                slaveCombo.name = me.slaveName;
+              } else {
+                slaveCombo.name = me.masterCombo.value + "_id";
+              }
+
+              if (me.slaveDefaultData != -1) {
+                slaveCombo.value = me.slaveDefaultData;
+              }
+
+              slaveCombo.itemLabelPath = "description";
+              slaveCombo.itemValuePath = "id";
+              slaveCombo.label = me.slaveLabel;
+              slaveCombo.items = r.detail.response.payload;
+              slaveComboDiv.appendChild(slaveCombo);
+              slaveCombo.required = me.required;
+
+              slaveCombo.addEventListener('value-changed', function(e) {
+                this.selectedValue = e.detail.value;
+
+                this.dispatchEvent(new CustomEvent('wt-slave-combo-changed', {
+                  bubbles: true,
+                  composed: true,
+                  value: e.detail.value,
+                  detail: {
+                    target: this._target,
+                    value: e.detail.value,
+                    item: e.target.selectedItem
+                  }
+                }));
+
+
+                // this.fire('wt-slave-combo-changed', {
+                //       value: e.detail.value
+                // });
+              });
+            }
+        }
+
+    }
+
+    window.customElements.define(WtMasterSlaveCombo.is, WtMasterSlaveCombo);
+  </script>
+</dom-module>
+
