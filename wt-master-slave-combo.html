@@ -4,6 +4,7 @@
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../iron-form/iron-form.html">
+<link rel="import" href="../wt-vaadin-multi-combo/wt-vaadin-multi-combo.html">
 <link rel="import" href="../vaadin-combo-box/vaadin-combo-box.html">
 
 <link rel="import" href="../wt-bootstrap-styles/wt-bootstrap-styles.html">
@@ -189,7 +190,12 @@ Wham! It's all awesome now!
             }
 
             if (r.detail.response.payload.length > 0) {
-              var slaveCombo = document.createElement('vaadin-combo-box');
+              if (me.masterCombo.selectedItem.combo_type == "multiple") {
+                var slaveCombo = document.createElement('wt-vaadin-multi-combo');
+              } else {
+                var slaveCombo = document.createElement('vaadin-combo-box');
+              }
+
               slaveCombo.id = "slave-combo";
               slaveCombo.disabled = me.disabled;
               slaveCombo.readonly = me.readonly;
