@@ -3,6 +3,8 @@
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../paper-input/paper-input.html">
 <link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../iron-form/iron-form.html">
 <link rel="import" href="../wt-vaadin-multi-combo/wt-vaadin-multi-combo.html">
 <link rel="import" href="../vaadin-combo-box/vaadin-combo-box.html">
@@ -34,11 +36,11 @@ Wham! It's all awesome now!
       }
     </style>
 
-    <iron-ajax auto id="master-combo-ajax"
-        url={{masterSlaveUrl}}
+    <iron-ajax id="master-combo-ajax"
+        url={{masterUrl}}
         params='{"xaction":"get-master-combo"}'
         handle-as="json"
-        last-response="{{master}}"></iron-ajax>
+        on-response="_handleMasterResponse"></iron-ajax>
 
     <iron-ajax id="slave-combo-ajax"
         url={{masterSlaveUrl}}
@@ -47,8 +49,8 @@ Wham! It's all awesome now!
 
     <div id="row-div">
       <div id="master-combo-div" class="{{masterColClass}}">
-        <vaadin-combo-box readonly={{readonly}} required="{{required}}"  disabled="{{disabled}}"  value={{masterDefaultData}} name="master-combo" id="master-combo" class="elements-box" items="[[master.payload]]"
-        label={{masterLabel}} item-label-path="desc" item-value-path="type"><paper-icon-button id="remove" slot="prefix" style="width: 25px; height: 25px; ; color: red" icon="icons:remove-circle"></paper-icon-button></vaadin-combo-box>
+        <vaadin-combo-box readonly={{readonly}} required="{{required}}"  disabled="{{disabled}}"  value={{masterDefaultData}} name="master-combo" id="master-combo" class="elements-box" items="{{items}}"
+        label={{masterLabel}} item-label-path="description" item-value-path="url"><paper-icon-button id="remove" slot="prefix" hidden style="width: 25px; height: 25px; ; color: red" icon="icons:remove-circle"></paper-icon-button></vaadin-combo-box>
       </div>
       <div id="slave-combo-div" class="{{slaveColClass}}">
       </div>
@@ -66,9 +68,19 @@ Wham! It's all awesome now!
 
       static get properties() {
         return {
-            masterSlaveUrl: String,
-            masterLabel: String,
-            slaveLabel: String,
+            items: {
+              type: Array,
+              value: []
+            },
+            masterUrl: String,
+            masterLabel: {
+              type: String,
+              value: "Select Item"
+            },
+            slaveLabel: {
+              type: String,
+              value: "Select Item"
+            },
             rowClass: {
               type: String,
               value: "row"
@@ -112,6 +124,10 @@ Wham! It's all awesome now!
             readonly: {
               type: Boolean,
               value: false
+            },
+            showRemoveIcon: {
+              type: String,
+              value: "false"
             }
         }
       }
@@ -123,10 +139,20 @@ Wham! It's all awesome now!
 
             var masterCombo = Polymer.dom(this.root).querySelector('#master-combo');
             var slaveComboAjax = Polymer.dom(this.root).querySelector('#slave-combo-ajax');
+            var masterComboAjax = Polymer.dom(this.root).querySelector('#master-combo-ajax');
             var rowDiv = Polymer.dom(this.root).querySelector('#row-div');
             var slaveComboDiv = Polymer.dom(this.root).querySelector('#slave-combo-div');
             var masterComboDiv = Polymer.dom(this.root).querySelector('#master-combo-div');
             var removeBtn = Polymer.dom(this.root).querySelector('#remove');
+
+            if (me.items.length == 0) {
+              masterComboAjax.url = me.masterUrl;
+              masterComboAjax.generateRequest();
+            }
+
+            if (me.showRemoveIcon == "true") {
+              removeBtn.hidden = false;
+            }
 
             rowDiv.className += " "+me.rowClass;
             slaveComboDiv.className += " "+me.slaveColClass;
@@ -161,7 +187,8 @@ Wham! It's all awesome now!
             masterCombo.addEventListener('value-changed', function(e) {
                 // Do ajax based on master combo value.
                 if (typeof masterCombo.value != 'undefined' && masterCombo.value != -1) {
-                    slaveComboAjax.params = {xaction: "get-"+masterCombo.value};
+                    ////slaveComboAjax.params = {xaction: "get-"+masterCombo.value};
+                    slaveComboAjax.url = masterCombo.value;
                     slaveComboAjax.generateRequest();
                 }
 
@@ -189,7 +216,7 @@ Wham! It's all awesome now!
               slaveComboDiv.removeChild(slaveComboDiv.childNodes[0]);
             }
 
-            if (r.detail.response.payload.length > 0) {
+            if (r.detail.response != null && r.detail.response.payload.length > 0) {
               if (me.masterCombo.selectedItem.combo_type == "multiple") {
                 var slaveCombo = document.createElement('wt-vaadin-multi-combo');
               } else {
@@ -209,8 +236,8 @@ Wham! It's all awesome now!
                 slaveCombo.value = me.slaveDefaultData;
               }
 
-              slaveCombo.itemLabelPath = "description";
-              slaveCombo.itemValuePath = "id";
+              slaveCombo.itemLabelPath = "label";
+              slaveCombo.itemValuePath = "value";
               slaveCombo.label = me.slaveLabel;
               slaveCombo.items = r.detail.response.payload;
               slaveComboDiv.appendChild(slaveCombo);
@@ -236,6 +263,11 @@ Wham! It's all awesome now!
                 // });
               });
             }
+        }
+
+        _handleMasterResponse(r) {
+          var masterCombo = Polymer.dom(this.root).querySelector('#master-combo');
+           masterCombo.items = r.detail.response.payload;
         }
 
     }

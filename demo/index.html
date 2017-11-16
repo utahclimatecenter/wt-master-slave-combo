@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+    <title>wt-master-slave-combo demo</title>
+
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+    <link rel="import" href="../wt-master-slave-combo.html">
+
+    <custom-style>
+      <style is="custom-style" include="demo-pages-shared-styles">
+
+        .centered800 {
+          max-width: 800px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+      </style>
+    </custom-style>
+  </head>
+  <body>
+    <div class="vertical-section-container centered800">
+      <h3>Basic wt-master-slave-combo demo!  (Passing in items array)</h3>
+      <demo-snippet>
+        <template>
+          <wt-master-slave-combo
+            master-label="Select Value",
+            show-remove-icon="false",
+            items='[
+            {"description": "States", "url": "./data/get-states-data.txt",  "combo_type": "regular"},
+            {"description": "Stations","url": "./data/get-stations-data.txt",   "combo_type": "multiple"}]'>
+          </wt-master-slave-combo>
+        </template>
+      </demo-snippet>
+    </div>
+    <div class="vertical-section-container centered800">
+      <h3>Basic wt-master-slave-combo demo!  (Passing url)</h3>
+      <demo-snippet>
+        <template>
+          <wt-master-slave-combo
+            master-url="./data/master-combo.txt"
+           >
+          </wt-master-slave-combo>
+        </template>
+      </demo-snippet>
+    </div>
+  </body>
+</html>
