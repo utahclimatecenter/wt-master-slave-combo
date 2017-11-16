@@ -229,7 +229,7 @@ Wham! It's all awesome now!
               if (me.slaveName != "") {
                 slaveCombo.name = me.slaveName;
               } else {
-                slaveCombo.name = me.masterCombo.value + "_id";
+                slaveCombo.name = me.masterCombo.selectedItem.form_field_name;
               }
 
               if (me.slaveDefaultData != -1) {
