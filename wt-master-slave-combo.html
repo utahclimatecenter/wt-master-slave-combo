@@ -192,15 +192,15 @@ Wham! It's all awesome now!
                     slaveComboAjax.generateRequest();
                 }
 
-                this.dispatchEvent(new CustomEvent('wt-slave-combo-changed', {
-                  composed: true,
-                  bubbles: true,
-                  value: e.detail.value,
-                  detail: {
-                    target: this._target,
-                    value: e.detail.value
-                  }
-                }));
+                // this.dispatchEvent(new CustomEvent('wt-slave-combo-changed', {
+                //   composed: true,
+                //   bubbles: true,
+                //   value: e.detail.value,
+                //   detail: {
+                //     target: this._target,
+                //     value: e.detail.value
+                //   }
+                // }));
             });
         }
 
